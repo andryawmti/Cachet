@@ -16,6 +16,8 @@ use CachetHQ\Cachet\Bus\Commands\Schedule\CreateScheduleCommand;
 use CachetHQ\Cachet\Bus\Commands\Schedule\DeleteScheduleCommand;
 use CachetHQ\Cachet\Bus\Commands\Schedule\UpdateScheduleCommand;
 use CachetHQ\Cachet\Integrations\Contracts\System;
+use CachetHQ\Cachet\Models\Component;
+use CachetHQ\Cachet\Models\ComponentGroup;
 use CachetHQ\Cachet\Models\IncidentTemplate;
 use CachetHQ\Cachet\Models\Schedule;
 use GrahamCampbell\Binput\Facades\Binput;
@@ -79,6 +81,8 @@ class ScheduleController extends Controller
 
         return View::make('dashboard.maintenance.add')
             ->withPageTitle(trans('dashboard.schedule.add.title').' - '.trans('dashboard.dashboard'))
+            ->withComponentsInGroups(ComponentGroup::with('components')->get())
+            ->withComponentsOutGroups(Component::where('group_id', '=', 0)->get())
             ->withIncidentTemplates($incidentTemplates)
             ->withNotificationsEnabled($this->system->canNotifySubscribers());
     }
@@ -98,7 +102,8 @@ class ScheduleController extends Controller
                 Binput::get('scheduled_at'),
                 Binput::get('completed_at'),
                 Binput::get('components', []),
-                Binput::get('notify', false)
+                Binput::get('notify', false),
+                Binput::get('notify_nh_clients', false)
             ));
         } catch (ValidationException $e) {
             return cachet_redirect('dashboard.schedule.create')
@@ -124,6 +129,8 @@ class ScheduleController extends Controller
 
         return View::make('dashboard.maintenance.edit')
             ->withPageTitle(trans('dashboard.schedule.edit.title').' - '.trans('dashboard.dashboard'))
+            ->withComponentsInGroups(ComponentGroup::with('components')->get())
+            ->withComponentsOutGroups(Component::where('group_id', '=', 0)->get())
             ->withIncidentTemplates($incidentTemplates)
             ->withSchedule($schedule);
     }

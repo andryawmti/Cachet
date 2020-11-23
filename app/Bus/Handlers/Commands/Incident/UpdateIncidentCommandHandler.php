@@ -70,10 +70,6 @@ class UpdateIncidentCommandHandler
      */
     public function handle(UpdateIncidentCommand $command)
     {
-        if ($template = IncidentTemplate::where('slug', '=', $command->template)->first()) {
-            $command->message = $this->parseTemplate($template, $command);
-        }
-
         $incident = $command->incident;
         $incident->fill($this->filter($command));
 
@@ -90,24 +86,13 @@ class UpdateIncidentCommandHandler
         $incident->save();
 
         // Store any meta?
-        if ($meta = $command->meta) {
+        if (! empty($command->meta)) {
             $this->storeMeta($command->meta, 'incidents', $incident->id);
         }
 
-        // Update the component.
-        if ($component = Component::find($command->component_id)) {
-            execute(new UpdateComponentCommand(
-                Component::find($command->component_id),
-                null,
-                null,
-                $command->component_status,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false
-            ));
+        if (! empty($command->components) && count($command->components)) {
+            Component::whereIn('id', $command->components)
+                ->update(['status' => $command->component_status]);
         }
 
         event(new IncidentWasUpdatedEvent($this->auth->user(), $incident));
@@ -124,15 +109,24 @@ class UpdateIncidentCommandHandler
      */
     protected function filter(UpdateIncidentCommand $command)
     {
+        if (! empty($command->message)) {
+            $command->message = twig_parse($command->message, [
+                'name'              => $command->name,
+                'status'            => trans('cachet.incidents.status')[$command->status],
+                'visible'           => $command->visible,
+                'stickied'          => $command->stickied,
+                'occurred_at'       => $command->occurred_at,
+                'components'        => Component::find($command->components) ?: null,
+                'component_status'  => trans('cachet.components.status')[$command->component_status],
+            ]);
+        }
+
         $params = [
-            'name'             => $command->name,
-            'status'           => $command->status,
-            'message'          => $command->message,
-            'visible'          => $command->visible,
-            'stickied'         => $command->stickied,
-            'component_id'     => $command->component_id,
-            'component_status' => $command->component_status,
-            'notify'           => $command->notify,
+            'name'              => $command->name,
+            'status'            => $command->status,
+            'message'           => $command->message,
+            'visible'           => $command->visible,
+            'stickied'          => $command->stickied,
         ];
 
         return array_filter($params, function ($val) {

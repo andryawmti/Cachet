@@ -68,18 +68,26 @@ final class CreateScheduleCommand
     public $notify;
 
     /**
+     * Whether to notify NH clients that the incident was reported.
+     *
+     * @var bool
+     */
+    public $notify_nh_clients;
+
+    /**
      * The validation rules.
      *
      * @var string[]
      */
     public $rules = [
-        'name'         => 'required|string',
-        'message'      => 'nullable|string',
-        'status'       => 'required|int|min:0|max:2',
-        'scheduled_at' => 'required|string',
-        'completed_at' => 'nullable|string',
-        'components'   => 'nullable|array',
-        'notify'       => 'nullable|bool',
+        'name'              => 'required|string',
+        'message'           => 'nullable|string',
+        'status'            => 'required|int|min:0|max:2',
+        'scheduled_at'      => 'required|string',
+        'completed_at'      => 'nullable|string',
+        'components'        => 'nullable|array',
+        'notify'            => 'nullable|bool',
+        'notify_nh_clients' => 'nullable|bool',
     ];
 
     /**
@@ -95,7 +103,7 @@ final class CreateScheduleCommand
      *
      * @return void
      */
-    public function __construct($name, $message, $status, $scheduled_at, $completed_at, $components, $notify)
+    public function __construct($name, $message, $status, $scheduled_at, $completed_at, $components, $notify, $notify_nh_clients)
     {
         $this->name = $name;
         $this->message = $message;
@@ -104,5 +112,6 @@ final class CreateScheduleCommand
         $this->completed_at = $completed_at;
         $this->components = $components;
         $this->notify = $notify;
+        $this->notify_nh_clients = $notify_nh_clients;
     }
 }

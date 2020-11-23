@@ -18,6 +18,7 @@ use CachetHQ\Cachet\Bus\Exceptions\Incident\InvalidIncidentTimestampException;
 use CachetHQ\Cachet\Bus\Handlers\Traits\StoresMeta;
 use CachetHQ\Cachet\Models\Component;
 use CachetHQ\Cachet\Models\Incident;
+use CachetHQ\Cachet\Models\IncidentComponent;
 use CachetHQ\Cachet\Models\IncidentTemplate;
 use CachetHQ\Cachet\Models\Meta;
 use CachetHQ\Cachet\Services\Dates\DateFactory;
@@ -72,24 +73,30 @@ class CreateIncidentCommandHandler
      */
     public function handle(CreateIncidentCommand $command)
     {
+        if (! empty($command->message)) {
+            $command->message = twig_parse($command->message, [
+                'name'              => $command->name,
+                'status'            => trans('cachet.incidents.status')[$command->status],
+                'visible'           => $command->visible,
+                'notify'            => $command->notify,
+                'notify_nh_clients' => $command->notify_nh_clients,
+                'stickied'          => $command->stickied,
+                'occurred_at'       => $command->occurred_at,
+                'components'        => Component::find($command->components) ?: null,
+                'component_status'  => trans('cachet.components.status')[$command->component_status],
+            ]);
+        }
+
         $data = [
-            'user_id'  => $this->auth->user()->id,
-            'name'     => $command->name,
-            'status'   => $command->status,
-            'visible'  => $command->visible,
-            'stickied' => $command->stickied,
+            'user_id'           => $this->auth->user()->id,
+            'name'              => $command->name,
+            'status'            => $command->status,
+            'visible'           => $command->visible,
+            'stickied'          => $command->stickied,
+            'notify'            => $command->notify,
+            'notify_nh_clients' => $command->notify_nh_clients,
+            'message'           => $command->message,
         ];
-
-        if ($template = IncidentTemplate::where('slug', '=', $command->template)->first()) {
-            $data['message'] = $this->parseTemplate($template, $command);
-        } else {
-            $data['message'] = $command->message;
-        }
-
-        // Link with the component.
-        if ($command->component_id) {
-            $data['component_id'] = $command->component_id;
-        }
 
         // The incident occurred at a different time.
         if ($occurredAt = $command->occurred_at) {
@@ -105,28 +112,26 @@ class CreateIncidentCommandHandler
         // Create the incident
         $incident = Incident::create($data);
 
+        // Link with the component.
+        if ($command->components) {
+            Component::whereIn('id', $command->components)
+                ->update(['status' => $command->component_status]);
+
+            foreach ($command->components as $componentId) {
+                IncidentComponent::create([
+                    'incident_id'  => $incident->id,
+                    'component_id' => $componentId,
+                    'status_id'    => 0
+                ]);
+            }
+        }
+
         // Store any meta?
-        if ($meta = $command->meta) {
+        if ($command->meta) {
             $this->storeMeta($command->meta, 'incidents', $incident->id);
         }
 
-        // Update the component.
-        if ($component = Component::find($command->component_id)) {
-            execute(new UpdateComponentCommand(
-                Component::find($command->component_id),
-                null,
-                null,
-                $command->component_status,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false
-            ));
-        }
-
-        event(new IncidentWasCreatedEvent($this->auth->user(), $incident, (bool) $command->notify));
+        event(new IncidentWasCreatedEvent($this->auth->user(), $incident));
 
         return $incident;
     }

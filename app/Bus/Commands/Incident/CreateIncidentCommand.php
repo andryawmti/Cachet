@@ -48,11 +48,11 @@ final class CreateIncidentCommand
     public $visible;
 
     /**
-     * The incident component.
+     * The incident components.
      *
-     * @var int
+     * @var array
      */
-    public $component_id;
+    public $components;
 
     /**
      * The component status.
@@ -67,6 +67,13 @@ final class CreateIncidentCommand
      * @var bool
      */
     public $notify;
+
+    /**
+     * Whether to notify NH cilents about the incident or not.
+     *
+     * @var bool
+     */
+    public $notify_nh_clients;
 
     /**
      * Whether to stick the incident on top.
@@ -109,17 +116,18 @@ final class CreateIncidentCommand
      * @var string[]
      */
     public $rules = [
-        'name'             => 'required|string',
-        'status'           => 'required|int|min:0|max:4',
-        'message'          => 'nullable|string',
-        'visible'          => 'nullable|bool',
-        'component_id'     => 'nullable|required_with:component_status|int',
-        'component_status' => 'nullable|required_with:component_id|int|min:0|max:4',
-        'notify'           => 'nullable|bool',
-        'stickied'         => 'required|bool',
-        'occurred_at'      => 'nullable|string',
-        'template'         => 'nullable|string',
-        'meta'             => 'nullable|array',
+        'name'              => 'required|string',
+        'status'            => 'required|int|min:0|max:4',
+        'message'           => 'nullable|string',
+        'visible'           => 'nullable|bool',
+        'components'        => 'nullable|required_with:component_status|array',
+        'component_status'  => 'nullable|required_with:components|int|min:0|max:4',
+        'notify'            => 'nullable|bool',
+        'notify_nh_clients' => 'nullable|bool',
+        'stickied'          => 'required|bool',
+        'occurred_at'       => 'nullable|string',
+        'template'          => 'nullable|string',
+        'meta'              => 'nullable|array',
     ];
 
     /**
@@ -129,9 +137,10 @@ final class CreateIncidentCommand
      * @param int         $status
      * @param string      $message
      * @param int         $visible
-     * @param int         $component_id
+     * @param array       $components
      * @param int         $component_status
      * @param bool        $notify
+     * @param bool        $notify_nh_clients
      * @param bool        $stickied
      * @param string|null $occurred_at
      * @param string|null $template
@@ -140,15 +149,16 @@ final class CreateIncidentCommand
      *
      * @return void
      */
-    public function __construct($name, $status, $message, $visible, $component_id, $component_status, $notify, $stickied, $occurred_at, $template, array $template_vars = [], array $meta = [])
+    public function __construct($name, $status, $message, $visible, $components, $component_status, $notify, $notify_nh_clients, $stickied, $occurred_at, $template, array $template_vars = [], array $meta = [])
     {
         $this->name = $name;
         $this->status = $status;
         $this->message = $message;
         $this->visible = $visible;
-        $this->component_id = $component_id;
+        $this->components = $components;
         $this->component_status = $component_status;
         $this->notify = $notify;
+        $this->notify_nh_clients = $notify_nh_clients;
         $this->stickied = $stickied;
         $this->occurred_at = $occurred_at;
         $this->template = $template;

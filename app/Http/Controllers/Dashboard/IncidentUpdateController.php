@@ -15,6 +15,7 @@ use AltThree\Validator\ValidationException;
 use CachetHQ\Cachet\Bus\Commands\IncidentUpdate\CreateIncidentUpdateCommand;
 use CachetHQ\Cachet\Bus\Commands\IncidentUpdate\UpdateIncidentUpdateCommand;
 use CachetHQ\Cachet\Integrations\Contracts\System;
+use CachetHQ\Cachet\Models\Component;
 use CachetHQ\Cachet\Models\Incident;
 use CachetHQ\Cachet\Models\IncidentTemplate;
 use CachetHQ\Cachet\Models\IncidentUpdate;
@@ -103,12 +104,12 @@ class IncidentUpdateController extends Controller
     public function createIncidentUpdateAction(Incident $incident)
     {
         try {
-            $incidentUpdate = execute(new CreateIncidentUpdateCommand(
+            execute(new CreateIncidentUpdateCommand(
                 $incident,
                 Binput::get('status'),
                 Binput::get('message'),
-                Binput::get('component_id'),
-                Binput::get('component_status'),
+                Binput::get('components', []),
+                Binput::get('component_status', null),
                 $this->auth->user()
             ));
         } catch (ValidationException $e) {
@@ -116,10 +117,6 @@ class IncidentUpdateController extends Controller
                 ->withInput(Binput::all())
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.incidents.updates.add.failure')))
                 ->withErrors($e->getMessageBag());
-        }
-
-        if ($incident->component) {
-            $incident->component->update(['status' => Binput::get('component_status')]);
         }
 
         return cachet_redirect('dashboard.incidents')
@@ -136,6 +133,7 @@ class IncidentUpdateController extends Controller
      */
     public function showEditIncidentUpdateAction(Incident $incident, IncidentUpdate $incidentUpdate)
     {
+        // var_dump('yoooma');exit;
         return View::make('dashboard.incidents.updates.edit')
             ->withIncident($incident)
             ->withUpdate($incidentUpdate)

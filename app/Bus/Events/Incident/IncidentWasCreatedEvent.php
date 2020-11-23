@@ -32,26 +32,19 @@ final class IncidentWasCreatedEvent implements ActionInterface, IncidentEventInt
     public $incident;
 
     /**
-     * Whether to notify that the incident was reported.
-     *
-     * @var bool
-     */
-    public $notify;
-
-    /**
      * Create a new incident has reported event instance.
      *
      * @param \CachetHQ\Cachet\Models\User     $user
      * @param \CachetHQ\Cachet\Models\Incident $incident
      * @param bool                             $notify
+     * @param bool                             $notifyNhClients
      *
      * @return void
      */
-    public function __construct(User $user, Incident $incident, $notify = false)
+    public function __construct(User $user, Incident $incident)
     {
         $this->user = $user;
         $this->incident = $incident;
-        $this->notify = $notify;
     }
 
     /**

@@ -67,11 +67,13 @@ class Schedule extends Model implements HasPresenter
      * @var string[]
      */
     protected $casts = [
-        'name'         => 'string',
-        'message'      => 'string',
-        'status'       => 'int',
-        'scheduled_at' => 'datetime',
-        'completed_at' => 'datetime',
+        'name'              => 'string',
+        'message'           => 'string',
+        'status'            => 'int',
+        'scheduled_at'      => 'datetime',
+        'completed_at'      => 'datetime',
+        'notify'            => 'bool',
+        'notify_nh_clients' => 'bool',
     ];
 
     /**
@@ -87,6 +89,8 @@ class Schedule extends Model implements HasPresenter
         'completed_at',
         'created_at',
         'updated_at',
+        'notify',
+        'notify_nh_clients',
     ];
 
     /**
@@ -140,7 +144,7 @@ class Schedule extends Model implements HasPresenter
      */
     public function components()
     {
-        return $this->hasMany(ScheduleComponent::class);
+        return $this->belongsToMany(Component::class, 'schedule_components');
     }
 
     /**

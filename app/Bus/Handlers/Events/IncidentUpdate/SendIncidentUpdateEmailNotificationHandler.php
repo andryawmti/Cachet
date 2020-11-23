@@ -15,6 +15,7 @@ use CachetHQ\Cachet\Bus\Events\IncidentUpdate\IncidentUpdateWasReportedEvent;
 use CachetHQ\Cachet\Integrations\Contracts\System;
 use CachetHQ\Cachet\Models\Subscriber;
 use CachetHQ\Cachet\Notifications\IncidentUpdate\IncidentUpdatedNotification;
+use Illuminate\Contracts\Notifications\Dispatcher;
 
 class SendIncidentUpdateEmailNotificationHandler
 {
@@ -63,28 +64,34 @@ class SendIncidentUpdateEmailNotificationHandler
             return;
         }
 
-        // First notify all global subscribers.
-        $globalSubscribers = $this->subscriber->isVerified()->isGlobal()->get();
-
-        $globalSubscribers->each(function ($subscriber) use ($update) {
-            $subscriber->notify(new IncidentUpdatedNotification($update));
-        });
-
-        if (!$incident->component) {
-            return;
+        if ($incident->notify_nh_clients) {
+            app(Dispatcher::class)->send(new Subscriber(), new IncidentUpdatedNotification($update));
         }
 
-        $notified = $globalSubscribers->pluck('id')->all();
+        if ($incident->notify) {
+            // First notify all global subscribers.
+            $globalSubscribers = $this->subscriber->isVerified()->isGlobal()->get();
 
-        // Notify the remaining component specific subscribers.
-        $componentSubscribers = $this->subscriber
-            ->isVerified()
-            ->forComponent($incident->component->id)
-            ->get()
-            ->reject(function ($subscriber) use ($notified) {
-                return in_array($subscriber->id, $notified);
-            })->each(function ($subscriber) use ($update) {
+            $globalSubscribers->each(function ($subscriber) use ($update) {
                 $subscriber->notify(new IncidentUpdatedNotification($update));
             });
+
+            if (!$incident->component) {
+                return;
+            }
+
+            $notified = $globalSubscribers->pluck('id')->all();
+
+            // Notify the remaining component specific subscribers.
+            $componentSubscribers = $this->subscriber
+                ->isVerified()
+                ->forComponent($incident->component->id)
+                ->get()
+                ->reject(function ($subscriber) use ($notified) {
+                    return in_array($subscriber->id, $notified);
+                })->each(function ($subscriber) use ($update) {
+                    $subscriber->notify(new IncidentUpdatedNotification($update));
+                });
+        }
     }
 }

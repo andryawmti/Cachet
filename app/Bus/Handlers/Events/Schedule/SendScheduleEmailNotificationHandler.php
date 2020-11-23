@@ -14,6 +14,7 @@ namespace CachetHQ\Cachet\Bus\Handlers\Events\Schedule;
 use CachetHQ\Cachet\Bus\Events\Schedule\ScheduleEventInterface;
 use CachetHQ\Cachet\Models\Subscriber;
 use CachetHQ\Cachet\Notifications\Schedule\NewScheduleNotification;
+use Illuminate\Contracts\Notifications\Dispatcher;
 
 /**
  * This is the send schedule event notification handler.
@@ -51,13 +52,15 @@ class SendScheduleEmailNotificationHandler
     public function handle(ScheduleEventInterface $event)
     {
         $schedule = $event->schedule;
-        if (!$event->notify) {
-            return false;
+        if ($schedule->notify) {
+            // First notify all global subscribers.
+            $this->subscriber->isVerified()->isGlobal()->get()->each(function ($subscriber) use ($schedule) {
+                $subscriber->notify(new NewScheduleNotification($schedule));
+            });
         }
 
-        // First notify all global subscribers.
-        $globalSubscribers = $this->subscriber->isVerified()->isGlobal()->get()->each(function ($subscriber) use ($schedule) {
-            $subscriber->notify(new NewScheduleNotification($schedule));
-        });
+        if ($schedule->notify_nh_clients) {
+            app(Dispatcher::class)->send(new Subscriber(), new NewScheduleNotification($schedule));
+        }
     }
 }

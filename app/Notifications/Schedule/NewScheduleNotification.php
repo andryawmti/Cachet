@@ -12,12 +12,14 @@
 namespace CachetHQ\Cachet\Notifications\Schedule;
 
 use CachetHQ\Cachet\Models\Schedule;
+use CachetHQ\Cachet\Notifications\Channels\RabbitMqMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\NexmoMessage;
 use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 use McCool\LaravelAutoPresenter\Facades\AutoPresenter;
 
 /**
@@ -25,7 +27,7 @@ use McCool\LaravelAutoPresenter\Facades\AutoPresenter;
  *
  * @author James Brooks <james@alt-three.com>
  */
-class NewScheduleNotification extends Notification implements ShouldQueue
+class NewScheduleNotification extends Notification
 {
     use Queueable;
 
@@ -57,7 +59,30 @@ class NewScheduleNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail', 'nexmo', 'slack'];
+        $channel = [];
+        if ($this->schedule->notify) {
+            $channel = ['mail', 'nexmo', 'slack'];
+        }
+
+        if ($this->schedule->notify_nh_clients) {
+            $channel[] = 'rabbitmq';
+        }
+
+        return $channel;
+    }
+
+    /**
+     * Get the rabbitmq representation of the notification
+     *
+     * @return void
+     */
+    public function toRabbitMq()
+    {
+        return RabbitMqMessage::create($this->schedule->message)
+            ->asMaintenance()
+            ->withSubject($this->schedule->name)
+            ->withMaintenanceStatus($this->schedule->human_status)
+            ->withServers($this->schedule->components);
     }
 
     /**

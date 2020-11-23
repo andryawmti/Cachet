@@ -122,12 +122,13 @@ class IncidentController extends Controller
                 Binput::get('status'),
                 Binput::get('message', null, false, false),
                 Binput::get('visible', true),
-                Binput::get('component_id'),
-                Binput::get('component_status'),
+                Binput::get('components', []),
+                Binput::get('component_status', null),
                 Binput::get('notify', false),
+                Binput::get('notify_nh_clients', false),
                 Binput::get('stickied', false),
                 Binput::get('occurred_at'),
-                null,
+                Binput::get('template'),
                 [],
                 ['seo' => Binput::get('seo', [])]
             ));
@@ -135,7 +136,7 @@ class IncidentController extends Controller
             return cachet_redirect('dashboard.incidents.create')
                 ->withInput(Binput::all())
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.incidents.add.failure')))
-                ->withErrors($e->getMessageBag());
+                ->withErrors($e->getMessageBag() . ' fuck you');
         }
 
         return cachet_redirect('dashboard.incidents')
@@ -253,9 +254,8 @@ class IncidentController extends Controller
                 Binput::get('status'),
                 Binput::get('message'),
                 Binput::get('visible', true),
-                Binput::get('component_id'),
-                Binput::get('component_status'),
-                Binput::get('notify', true),
+                Binput::get('components', []),
+                Binput::get('component_status', null),
                 Binput::get('stickied', false),
                 Binput::get('occurred_at'),
                 null,
@@ -267,10 +267,6 @@ class IncidentController extends Controller
                 ->withInput(Binput::all())
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.incidents.templates.edit.failure')))
                 ->withErrors($e->getMessageBag());
-        }
-
-        if ($incident->component) {
-            $incident->component->update(['status' => Binput::get('component_status')]);
         }
 
         return cachet_redirect('dashboard.incidents.edit', ['id' => $incident->id])

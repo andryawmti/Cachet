@@ -42,6 +42,18 @@
                         </label>
                         @endforeach
                     </div>
+                    @if(count($schedule->components))
+                    <div class="form-group" id="component-status">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                            @foreach($schedule->components as $x => $component)
+                                <strong>@if($x), @endif{{ $component->name }}</strong>
+                                <input type="hidden" name="components[]" value="{{ $component->id }}">
+                            @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                     <div class="form-group">
                         <label>{{ trans('forms.schedules.message') }}</label>
                         <div class='markdown-control'>

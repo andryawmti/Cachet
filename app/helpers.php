@@ -14,6 +14,8 @@ use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Request;
 use Jenssegers\Date\Date;
+use Twig\Environment as Twig_Environment;
+use Twig\Loader\ArrayLoader as Twig_Loader_Array;
 
 if (!function_exists('setting')) {
     /**
@@ -192,5 +194,15 @@ if (!function_exists('execute')) {
     function execute($command)
     {
         return app(Dispatcher::class)->dispatchNow($command);
+    }
+}
+
+if (! function_exists('twig_parse')) {
+    function twig_parse(string $text, array $vars): string
+    {
+        $env = new Twig_Environment(new Twig_Loader_Array([]));
+        $template = $env->createTemplate($text);
+
+        return $template->render($vars);
     }
 }

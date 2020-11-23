@@ -137,7 +137,7 @@ class Component extends Model implements HasPresenter
      */
     public function incidents()
     {
-        return $this->hasMany(Incident::class, 'component_id', 'id');
+        return $this->belongsToMany(Incident::class, 'incident_components');
     }
 
     /**

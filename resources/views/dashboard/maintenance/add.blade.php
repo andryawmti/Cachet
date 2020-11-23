@@ -42,6 +42,24 @@
                             </label>
                             @endforeach
                         </div>
+                        @if(!$componentsInGroups->isEmpty() || !$componentsOutGroups->isEmpty())
+                        <div class="form-group">
+                            <label>{{ trans('forms.incidents.component') }}</label> <small class="text-muted">{{ trans('forms.optional') }}</small>
+                            <select multiple name="components[]" class="form-control" v-model="components">
+                                <option value="" selected></option>
+                                @foreach($componentsInGroups as $group)
+                                <optgroup label="{{ $group->name }}">
+                                    @foreach($group->components as $component)
+                                    <option value="{{ $component->id }}">{!! $component->name !!}</option>
+                                    @endforeach
+                                </optgroup>
+                                @endforeach
+                                @foreach($componentsOutGroups as $component)
+                                <option value="{{ $component->id }}">{!! $component->name !!}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
                         <div class="form-group">
                             <label>{{ trans('forms.schedules.message') }}</label>
                             <div class="markdown-control">
@@ -58,11 +76,11 @@
                         </div>
                     </fieldset>
                     @if($notificationsEnabled)
-                    <input type="hidden" name="notify" value="0">
+                    <input type="hidden" name="notify_nh_clients" value="0">
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" name="notify" value="1" checked="{{ Binput::old('notify', 'checked') }}">
-                            {{ trans('forms.incidents.notify_subscribers') }}
+                            <input type="checkbox" name="notify_nh_clients" value="1">
+                            Notify Niagahoster Clients?
                         </label>
                     </div>
                     @endif

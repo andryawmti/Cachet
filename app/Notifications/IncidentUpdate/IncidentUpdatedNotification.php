@@ -13,6 +13,7 @@ namespace CachetHQ\Cachet\Notifications\IncidentUpdate;
 
 use CachetHQ\Cachet\Models\Incident;
 use CachetHQ\Cachet\Models\IncidentUpdate;
+use CachetHQ\Cachet\Notifications\Channels\RabbitMqMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\NexmoMessage;
@@ -57,7 +58,32 @@ class IncidentUpdatedNotification extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail', 'nexmo', 'slack'];
+        $channel = [];
+
+        if ($this->update->incident->notify) {
+            $channel = ['mail', 'nexmo', 'slack'];
+        }
+
+        if ($this->update->incident->notify_nh_clients) {
+            $channel[] = 'rabbitmq';
+        }
+
+        return $channel;
+    }
+
+    /**
+     * Get the rabbitmq representation of the notification
+     *
+     * @return void
+     */
+    public function toRabbitMq($notifiable)
+    {
+        $incident = $this->update->incident;
+        return RabbitMqMessage::create($this->update->message)
+            ->asIncidentUpdate()
+            ->withSubject($incident->name)
+            ->withServers($incident->components)
+            ->withIncidentStatus($this->update->human_status);
     }
 
     /**

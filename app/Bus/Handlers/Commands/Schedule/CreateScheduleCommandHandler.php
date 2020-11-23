@@ -14,11 +14,15 @@ namespace CachetHQ\Cachet\Bus\Handlers\Commands\Schedule;
 use AltThree\Validator\ValidationException;
 use CachetHQ\Cachet\Bus\Commands\Schedule\CreateScheduleCommand;
 use CachetHQ\Cachet\Bus\Events\Schedule\ScheduleWasCreatedEvent;
+use CachetHQ\Cachet\Models\Component;
 use CachetHQ\Cachet\Models\Schedule;
+use CachetHQ\Cachet\Models\ScheduleComponent;
 use CachetHQ\Cachet\Services\Dates\DateFactory;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\MessageBag;
 use InvalidArgumentException;
+use Twig\Environment as Twig_Environment;
+use Twig\Loader\ArrayLoader as Twig_Loader_Array;
 
 /**
  * This is the create schedule command handler.
@@ -66,7 +70,18 @@ class CreateScheduleCommandHandler
     {
         try {
             $schedule = Schedule::create($this->filter($command));
-            event(new ScheduleWasCreatedEvent($this->auth->user(), $schedule, (bool) $command->notify));
+
+            if (! empty($command->components)) {
+                foreach ($command->components as $componentId) {
+                    ScheduleComponent::create([
+                        'schedule_id'       => $schedule->id,
+                        'component_id'      => $componentId,
+                        'component_status'  => 0,
+                    ]);
+                }
+            }
+
+            event(new ScheduleWasCreatedEvent($this->auth->user(), $schedule));
         } catch (InvalidArgumentException $e) {
             throw new ValidationException(new MessageBag([$e->getMessage()]));
         }
@@ -83,6 +98,18 @@ class CreateScheduleCommandHandler
      */
     protected function filter(CreateScheduleCommand $command)
     {
+        if (! empty($command->message)) {
+            $command->message = twig_parse($command->message, [
+                'name'              => $command->name,
+                'status'            => trans('cachet.schedules.status')[$command->status],
+                'notify'            => $command->notify,
+                'notify_nh_clients' => $command->notify_nh_clients,
+                'scheduled_at'      => $command->scheduled_at,
+                'completed_at'      => $command->completed_at,
+                'components'        => Component::find($command->components) ?: null,
+            ]);
+        }
+
         $scheduledAt = $this->dates->create('Y-m-d H:i', $command->scheduled_at);
 
         if ($completedAt = $command->completed_at) {
@@ -90,12 +117,13 @@ class CreateScheduleCommandHandler
         }
 
         $params = [
-            'name'         => $command->name,
-            'message'      => $command->message,
-            'status'       => $command->status,
-            'scheduled_at' => $scheduledAt,
-            'completed_at' => $completedAt,
-            'notify'       => $command->notify,
+            'name'              => $command->name,
+            'message'           => $command->message,
+            'status'            => $command->status,
+            'scheduled_at'      => $scheduledAt,
+            'completed_at'      => $completedAt,
+            'notify'            => $command->notify,
+            'notify_nh_clients' => $command->notify_nh_clients,
         ];
 
         $availableParams = array_filter($params, function ($val) {

@@ -1,5 +1,11 @@
 <script>
 module.exports = {
+    computed: {
+        showComponentStatus() {
+            const list = this.components.filter(id => id != '')
+            return list.length
+        },
+    },
     data () {
         return {
             template: null,
@@ -10,10 +16,8 @@ module.exports = {
             message: '',
             when: null,
             notify: false,
-            component: {
-                id: null,
-                status: null
-            }
+            components: [],
+            component_status: null,
         }
     },
     methods: {
@@ -34,12 +38,6 @@ module.exports = {
         'template' (template) {
             this.getTemplate(template)
         },
-        'component.id' (id) {
-            // If we unselect a component then reset the status.
-            if (id === '') {
-                this.component.status = null
-            }
-        }
     }
 }
 </script>

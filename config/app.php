@@ -199,6 +199,8 @@ return [
         CachetHQ\Cachet\Providers\RepositoryServiceProvider::class,
         CachetHQ\Cachet\Providers\RouteServiceProvider::class,
 
+        CachetHQ\Cachet\Providers\RabbitMqServiceProvider::class,
+
     ]),
 
     /*

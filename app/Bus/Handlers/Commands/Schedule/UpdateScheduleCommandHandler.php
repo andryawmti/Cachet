@@ -13,9 +13,13 @@ namespace CachetHQ\Cachet\Bus\Handlers\Commands\Schedule;
 
 use CachetHQ\Cachet\Bus\Commands\Schedule\UpdateScheduleCommand;
 use CachetHQ\Cachet\Bus\Events\Schedule\ScheduleWasUpdatedEvent;
+use CachetHQ\Cachet\Models\Component;
 use CachetHQ\Cachet\Models\Schedule;
 use CachetHQ\Cachet\Services\Dates\DateFactory;
 use Illuminate\Contracts\Auth\Guard;
+use McCool\LaravelAutoPresenter\Facades\AutoPresenter;
+use Twig\Environment as Twig_Environment;
+use Twig\Loader\ArrayLoader as Twig_Loader_Array;
 
 /**
  * This is the update schedule command handler.
@@ -79,6 +83,16 @@ class UpdateScheduleCommandHandler
      */
     protected function filter(UpdateScheduleCommand $command)
     {
+        if (! empty($command->message)) {
+            $command->message = twig_parse($command->message, [
+                'name'              => $command->name,
+                'status'            => trans('cachet.schedules.status')[$command->status],
+                'scheduled_at'      => $command->scheduled_at,
+                'completed_at'      => $command->completed_at,
+                'components'        => Component::find($command->components) ?: null,
+            ]);
+        }
+
         $params = [
             'name'    => $command->name,
             'message' => $command->message,

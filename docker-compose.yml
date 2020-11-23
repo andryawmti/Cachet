@@ -1,0 +1,69 @@
+version: "3.7"
+services:
+  httpd:
+    image: romeoz/docker-apache-php:7.3
+    build:
+      context: ./Dockerfiles
+      dockerfile: Dockerfile-httpd
+    environment:
+      - COMPOSER_ALLOW_SUPERUSER=y
+    volumes:
+        - ./apache_app.conf:/etc/apache2/sites-enabled/app.conf
+        - php:/var/www/app:cached
+    ports:
+      - 8088:80
+    networks:
+      cachet:
+      niaga_network:
+        aliases:
+          - status.niaga.io
+  mysql:
+    image: mysql:5.7.20
+    ports:
+      - 3310:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: default
+      MYSQL_USER: default
+      MYSQL_PASSWORD: secret
+    volumes:
+      - ./.docker/data/db:/var/lib/mysql:cached
+    networks:
+      - cachet
+  redis:
+    image: "redis:alpine"
+    command: redis-server
+    ports:
+      - "6380:6379"
+    networks:
+      - cachet
+
+  rabbitmq:
+    image: rabbitmq:3.8.9-management-alpine
+    volumes:
+        - ./.docker/rabbitmq/etc/:/etc/rabbitmq/
+        - ./.docker/rabbitmq/data/:/var/lib/rabbitmq/
+        - ./.docker/rabbitmq/logs/:/var/log/rabbitmq/
+    environment:
+        RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+        RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+        RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    ports:
+        - 5672:5672
+        - 15672:15672
+    networks:
+        cachet:
+        niaga_network:
+          aliases:
+            - mq.niaga.io
+volumes:
+  php:
+    driver_opts:
+      type: none
+      device: $PWD
+      o: bind
+networks:
+  cachet:
+  niaga_network:
+    external:
+      name: niaga_network

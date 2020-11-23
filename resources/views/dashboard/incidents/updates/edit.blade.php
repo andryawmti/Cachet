@@ -45,16 +45,18 @@
                             {{ trans('cachet.incidents.status')[4] }}
                         </label>
                     </div>
-                    @if($incident->component)
+                    @if(count($incident->components))
                     <div class="form-group" id="component-status">
                         <div class="panel panel-default">
-                            <div class="panel-heading"><strong>{{ $incident->component->name }}</strong></div>
+                            <div class="panel-heading">
+                                <strong>@foreach($incident->components as $x => $component)@if($x), @endif{{ $component->name }}@endforeach</strong>
+                            </div>
                             <div class="panel-body">
                                 <div class="radio-items">
                                     @foreach(trans('cachet.components.status') as $statusID => $status)
                                     <div class="radio-inline">
                                         <label>
-                                            <input type="radio" name="component_status" value="{{ $statusID }}" {{ $incident->component->status == $statusID ? "checked='checked'" : "" }}>
+                                            <input type="radio" name="component_status" value="{{ $statusID }}" {{ $incident->components[0]->status == $statusID ? "checked='checked'" : "" }}>
                                             {{ $status }}
                                         </label>
                                     </div>

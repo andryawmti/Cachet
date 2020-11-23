@@ -51,6 +51,8 @@ class ScheduleComponent extends Model
         'component_status' => 'required|int',
     ];
 
+    protected $with = ['component'];
+
     /**
      * Get the schedule relation.
      *
@@ -68,6 +70,6 @@ class ScheduleComponent extends Model
      */
     public function component()
     {
-        return $this->hasOne(Component::class);
+        return $this->belongsTo(Component::class);
     }
 }

@@ -81,8 +81,8 @@ class Incident extends Model implements HasPresenter
      * @var string[]
      */
     protected $attributes = [
-        'stickied'      => false,
-        'notifications' => false,
+        'stickied' => false,
+        'notify'   => false,
     ];
 
     /**
@@ -91,14 +91,15 @@ class Incident extends Model implements HasPresenter
      * @var string[]
      */
     protected $casts = [
-        'component_id'  => 'int',
-        'status'        => 'int',
-        'user_id'       => 'int',
-        'visible'       => 'int',
-        'stickied'      => 'bool',
-        'notifications' => 'bool',
-        'occurred_at'   => 'datetime',
-        'deleted_at'    => 'date',
+        'component_id'      => 'int',
+        'status'            => 'int',
+        'user_id'           => 'int',
+        'visible'           => 'int',
+        'stickied'          => 'bool',
+        'notify'            => 'bool',
+        'notify_nh_clients' => 'bool',
+        'occurred_at'       => 'datetime',
+        'deleted_at'        => 'date',
     ];
 
     /**
@@ -113,7 +114,8 @@ class Incident extends Model implements HasPresenter
         'status',
         'visible',
         'stickied',
-        'notifications',
+        'notify',
+        'notify_nh_clients',
         'message',
         'occurred_at',
         'created_at',
@@ -126,14 +128,15 @@ class Incident extends Model implements HasPresenter
      * @var string[]
      */
     public $rules = [
-        'user_id'       => 'nullable|int',
-        'component_id'  => 'nullable|int',
-        'name'          => 'required|string',
-        'status'        => 'required|int',
-        'visible'       => 'required|bool',
-        'stickied'      => 'required|bool',
-        'notifications' => 'nullable|bool',
-        'message'       => 'required|string',
+        'user_id'           => 'nullable|int',
+        'component_id'      => 'nullable|int',
+        'name'              => 'required|string',
+        'status'            => 'required|int',
+        'visible'           => 'required|bool',
+        'stickied'          => 'required|bool',
+        'notify'            => 'nullable|bool',
+        'noitfy_nh_clients' => 'nullable|bool',
+        'message'           => 'required|string',
     ];
 
     /**
@@ -185,6 +188,11 @@ class Incident extends Model implements HasPresenter
     public function component()
     {
         return $this->belongsTo(Component::class, 'component_id', 'id');
+    }
+
+    public function components()
+    {
+        return $this->belongsToMany(Component::class, 'incident_components');
     }
 
     /**

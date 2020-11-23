@@ -4,7 +4,8 @@ module.exports = {
         return {
             template: null,
             name: '',
-            message: ''
+            message: '',
+            components: [],
         }
     },
     methods: {

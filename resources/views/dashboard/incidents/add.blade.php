@@ -78,7 +78,7 @@
                         @if(!$componentsInGroups->isEmpty() || !$componentsOutGroups->isEmpty())
                         <div class="form-group">
                             <label>{{ trans('forms.incidents.component') }}</label> <small class="text-muted">{{ trans('forms.optional') }}</small>
-                            <select name="component_id" class="form-control" v-model="component.id">
+                            <select multiple name="components[]" class="form-control" v-model="components">
                                 <option value="" selected></option>
                                 @foreach($componentsInGroups as $group)
                                 <optgroup label="{{ $group->name }}">
@@ -93,7 +93,7 @@
                             </select>
                         </div>
                         @endif
-                        <div class="form-group" id="component-status" v-if="component.id">
+                        <div class="form-group" id="component-status" v-if="showComponentStatus">
                             <label>{{ trans('forms.incidents.component_status') }}</label>
                             <div class="panel panel-default">
                                 <div class="panel-body">
@@ -101,7 +101,7 @@
                                         @foreach(trans('cachet.components.status') as $statusID => $status)
                                         <div class="radio-inline">
                                             <label>
-                                                <input type="radio" name="component_status" value="{{ $statusID }}" v-model="component.status">
+                                                <input type="radio" name="component_status" value="{{ $statusID }}" v-model="component_status">
                                                 {{ $status }}
                                             </label>
                                         </div>
@@ -121,11 +121,11 @@
                             <input type="text" name="occurred_at" class="form-control flatpickr-time" data-date-format="Y-m-d H:i" placeholder="{{ trans('forms.optional') }}">
                         </div>
                         @if($notificationsEnabled)
-                        <input type="hidden" name="notify" value="0">
+                        <input type="hidden" name="notify_nh_clients" value="0">
                         <div class="checkbox">
                             <label>
-                                <input type="checkbox" name="notify" value="1" checked="{{ Binput::old('notify', 'checked') }}">
-                                {{ trans('forms.incidents.notify_subscribers') }}
+                                <input type="checkbox" name="notify_nh_clients" value="1">
+                                Notify Niagahoster Clients?
                             </label>
                         </div>
                         @endif
